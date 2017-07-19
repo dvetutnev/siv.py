@@ -14,9 +14,6 @@ class ToLeft(unittest.TestCase):
         self.ui_mock = mock.Mock()
         self.instance = Slider(self.storage_mock, self.renderer_mock, self.ui_mock)
 
-    def test_create(self):
-        self.assertIsNotNone(self.instance)
-
     def test_StorageLimit(self):
         left_data = [None, object(), object()]
         current_data = [object(), object()]
