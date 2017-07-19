@@ -3,7 +3,7 @@ from unittest import mock
 import itertools
 
 
-from lib.slider import Slider
+from libs.slider import Slider
 
 
 class ToLeft(unittest.TestCase):
@@ -45,13 +45,16 @@ class ToLeft(unittest.TestCase):
 
         self.renderer_mock.calc.side_effect = calc_result
 
+        render_result = itertools.repeat(object, 101)
+        self.renderer_mock.render.side_effect = render_result
+
         expect_renderer = itertools.chain(
-            (mock.call.calc(mock.ANY, mock.ANY) for dummy in range(len(calc_result))),
+            itertools.repeat(mock.call.calc(mock.ANY, mock.ANY), len(calc_result)),
             (mock.call.render(mock.ANY, mock.ANY, i) for i in range(0, 100))
         )
         expect_renderer = list(expect_renderer)
 
-        expect_ui = (mock.call.draw(mock.ANY) for dummy in range(0, 100))
+        expect_ui = (mock.call.draw(pic_mock) for pic_mock in render_result)
 
         self.instance.to_left()
 
