@@ -11,8 +11,22 @@ class ToLeft(unittest.TestCase):
     def setUp(self):
         self.storage_mock = mock.Mock()
         self.renderer_mock = mock.Mock()
-        self.ui_mock = mock.Mock()
+        self.ui_mock = mock.Mock(spec=['draw'])
         self.instance = Slider(self.storage_mock, self.renderer_mock, self.ui_mock)
+
+    def test_StorageNoData(self):
+        self.storage_mock.mock_add_spec(['get_current'])
+        self.storage_mock.get_current.return_value = None
+
+        self.renderer_mock.mock_add_spec(['render_default'])
+        pic_mock = object()
+        self.renderer_mock.render_default.return_value = pic_mock
+
+        self.instance.to_left()
+
+        self.storage_mock.get_current.assert_called_once_with()
+        self.renderer_mock.render_default.assert_called_once_with()
+        self.ui_mock.draw.assert_called_once_with(pic_mock)
 
     def test_StorageLimit(self):
         left_data = [None, object(), object()]

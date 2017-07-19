@@ -7,6 +7,11 @@ class Slider(object):
 
     def to_left(self):
         current = self._storage.get_current()
+        if current is None:
+            pic = self._renderer.render_default()
+            self._ui.draw(pic)
+            return
+
         i = 0
         while True:
             pic = self._storage.get_previous(i)
