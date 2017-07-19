@@ -32,5 +32,5 @@ class Slider(object):
             i += 1
 
         for i in range(0, 100):
-            pic = self._renderer.render(None, None, i)
+            pic = self._renderer.render_to_left(None, None, i)
             self._ui.draw(pic)
