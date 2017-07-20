@@ -65,7 +65,8 @@ class ToLeft(unittest.TestCase):
         self.storage_mock.mock_add_spec(['get_previous', 'get_current', 'get_next', 'step_next'])
         left_data = [None, object(), object()]
         self.storage_mock.get_previous.side_effect = left_data[::-1]
-        current_data = [object(), object()]
+        pic_next = object()
+        current_data = [object(), pic_next]
         self.storage_mock.get_current.side_effect = current_data
         right_data = [object(), object(), None]
         self.storage_mock.get_next.side_effect = right_data
@@ -77,6 +78,7 @@ class ToLeft(unittest.TestCase):
             mock.call.get_next(0), mock.call.get_next(1), mock.call.get_next(2)
         )
 
+        self.renderer_mock.mock_add_spec(['calc', 'render_to_left'])
         calc_result = (
             # left side
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
@@ -85,20 +87,16 @@ class ToLeft(unittest.TestCase):
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
             {'left': 0, 'left_done': False, 'right': 1, 'right_done': False}
         )
-
-        self.renderer_mock.mock_add_spec(['calc', 'render_to_left'])
         self.renderer_mock.calc.side_effect = calc_result
-
         render_result = itertools.repeat(object, 101)
         self.renderer_mock.render_to_left.side_effect = render_result
-
         expect_renderer = itertools.chain(
             itertools.repeat(mock.call.calc(mock.ANY, mock.ANY), len(calc_result)),
-            (mock.call.render_to_left(mock.ANY, mock.ANY, i) for i in range(0, 100))
+            (mock.call.render_to_left(left_data[1::] + current_data + right_data[:-1:], pic_next, i) for i in range(0, 100))
         )
         expect_renderer = list(expect_renderer)
 
-        expect_ui = (mock.call.draw(pic_mock) for pic_mock in render_result)
+        expect_ui = (mock.call.draw(pic) for pic in render_result)
 
         self.instance.to_left()
 

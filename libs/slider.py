@@ -29,14 +29,16 @@ class Slider(object):
             self._ui.draw(pic_ui)
             return
 
+        right_side = [pic_next]
         i = 0
         while True:
             pic = self._storage.get_next(i)
             if pic is None:
                 break
+            right_side.append(pic)
             self._renderer.calc(None, None)
             i += 1
 
         for i in range(0, 100):
-            pic = self._renderer.render_to_left(None, None, i)
+            pic = self._renderer.render_to_left(side_left + right_side, pic_next, i)
             self._ui.draw(pic)
