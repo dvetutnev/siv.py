@@ -12,17 +12,7 @@ class Slider(object):
             self._ui.draw(pic)
             return
 
-        side_left = [pic_current]
-        i = 0
-        while True:
-            pic = self._storage.get_previous(i)
-            if pic is None:
-                break
-            side_left.insert(0, pic)
-            result = self._renderer.calc(side_left, pic_current)
-            if result['left_done']:
-                break
-            i += 1
+        side_left = self._get_side_left(pic_current)
 
         self._storage.step_next()
         pic_next = self._storage.get_current()
@@ -31,17 +21,7 @@ class Slider(object):
             self._ui.draw(pic_ui)
             return
 
-        side_right = [pic_next]
-        i = 0
-        while True:
-            pic = self._storage.get_next(i)
-            if pic is None:
-                break
-            side_right.append(pic)
-            result = self._renderer.calc(side_right, pic_next)
-            if result['right_done']:
-                break
-            i += 1
+        side_right = self._get_right_side(pic_next)
 
         for i in range(101):
             pic = self._renderer.render_to_left(side_left + side_right, pic_next, i)
@@ -54,17 +34,7 @@ class Slider(object):
             self._ui.draw(pic)
             return
 
-        side_right = [pic_current]
-        i = 0
-        while True:
-            pic = self._storage.get_next(i)
-            if pic is None:
-                break
-            side_right.append(pic)
-            result = self._renderer.calc(side_right, pic_current)
-            if result['right_done']:
-                break
-            i += 1
+        side_right = self._get_right_side(pic_current)
 
         self._storage.step_previous()
         pic_previous = self._storage.get_current()
@@ -73,18 +43,36 @@ class Slider(object):
             self._ui.draw(pic_ui)
             return
 
-        side_left = [pic_previous]
+        side_left = self._get_side_left(pic_previous)
+
+        for i in range(101):
+            pic = self._renderer.render_to_right(side_left + side_right, pic_previous, i)
+            self._ui.draw(pic)
+
+    def _get_side_left(self, pic_center):
+        result = [pic_center]
         i = 0
         while True:
             pic = self._storage.get_previous(i)
             if pic is None:
                 break
-            side_left.insert(0, pic)
-            result = self._renderer.calc(side_left, pic_previous)
-            if result['left_done']:
+            result.insert(0, pic)
+            attempt = self._renderer.calc(result, pic_center)
+            if attempt['left_done']:
                 break
             i += 1
+        return result
 
-        for i in range(101):
-            pic = self._renderer.render_to_right(side_left + side_right, pic_previous, i)
-            self._ui.draw(pic)
+    def _get_right_side(self, pic_center):
+        result = [pic_center]
+        i = 0
+        while True:
+            pic = self._storage.get_next(i)
+            if pic is None:
+                break
+            result.append(pic)
+            attempt = self._renderer.calc(result, pic_center)
+            if attempt['right_done']:
+                break
+            i += 1
+        return result
