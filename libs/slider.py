@@ -19,13 +19,15 @@ class Slider(object):
             if pic is None:
                 break
             side_left.insert(0, pic)
-            self._renderer.calc(None, None)
+            result = self._renderer.calc(side_left[::], pic_current)
+            if result['left_done']:
+                break
             i += 1
 
         self._storage.step_next()
         pic_next = self._storage.get_current()
         if pic_next is None:
-            pic_ui = self._renderer.render_to_left(side_left, pic_current, 100)
+            pic_ui = self._renderer.render_to_left(side_left[::], pic_current, 100)
             self._ui.draw(pic_ui)
             return
 
@@ -36,9 +38,11 @@ class Slider(object):
             if pic is None:
                 break
             right_side.append(pic)
-            self._renderer.calc(None, None)
+            result = self._renderer.calc(right_side[::], pic_next)
+            if result['right_done']:
+                break
             i += 1
 
-        for i in range(0, 100):
+        for i in range(101):
             pic = self._renderer.render_to_left(side_left + right_side, pic_next, i)
             self._ui.draw(pic)
