@@ -6,22 +6,28 @@ class Slider(object):
         self._ui = ui
 
     def to_left(self):
-        current = self._storage.get_current()
-        if current is None:
+        pic_current = self._storage.get_current()
+        if pic_current is None:
             pic = self._renderer.render_default()
             self._ui.draw(pic)
             return
 
+        side_left = [pic_current]
         i = 0
         while True:
             pic = self._storage.get_previous(i)
             if pic is None:
                 break
+            side_left.insert(0, pic)
             self._renderer.calc(None, None)
             i += 1
 
         self._storage.step_next()
-        next = self._storage.get_current()
+        pic_next = self._storage.get_current()
+        if pic_next is None:
+            pic_ui = self._renderer.render_to_left(side_left, pic_current, 100)
+            self._ui.draw(pic_ui)
+            return
 
         i = 0
         while True:

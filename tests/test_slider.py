@@ -28,6 +28,39 @@ class ToLeft(unittest.TestCase):
         self.renderer_mock.render_default.assert_called_once_with()
         self.ui_mock.draw.assert_called_once_with(pic_mock)
 
+    def test_StorageNoNext(self):
+        self.storage_mock.mock_add_spec(('get_previous', 'get_current', 'step_next'))
+        pic_current = object()
+        self.storage_mock.get_current.side_effect = (pic_current, None)
+        pic_previous_1, pic_previous_2 = object(), object()
+        self.storage_mock.get_previous.side_effect = (pic_previous_2, pic_previous_1, None)
+        expect_storage = (
+            mock.call.get_current(),
+            mock.call.get_previous(0), mock.call.get_previous(1), mock.call.get_previous(2),
+            mock.call.step_next(),
+            mock.call.get_current()
+        )
+
+        self.renderer_mock.mock_add_spec(('calc', 'render_to_left'))
+        calc_result = (
+            # only left side
+            {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False}
+        )
+        self.renderer_mock.calc.side_effect = calc_result
+        pic_ui = object()
+        self.renderer_mock.render_to_left.return_value = pic_ui
+        expect_renderer = (
+            mock.call.calc(mock.ANY, mock.ANY), mock.call.calc(mock.ANY, mock.ANY),
+            mock.call.render_to_left([pic_previous_1, pic_previous_2, pic_current], pic_current, 100)
+        )
+
+        self.instance.to_left()
+
+        self.storage_mock.assert_has_calls(expect_storage)
+        self.renderer_mock.assert_has_calls(expect_renderer)
+        self.ui_mock.draw.assert_called_once_with(pic_ui)
+
     def test_StorageLimit(self):
         left_data = [None, object(), object()]
         current_data = [object(), object()]
