@@ -138,12 +138,12 @@ class ToLeft(unittest.TestCase):
         right_data_calc = [pic_next] + right_data[::]
         expect_renderer_calc = [
             #left side
-            mock.call.calc(left_data_calc[2::], pic_current),
-            mock.call.calc(left_data_calc[1::], pic_current),
+            mock.call.calc(mock.ANY, pic_current),
+            mock.call.calc(mock.ANY, pic_current),
             mock.call.calc(left_data_calc, pic_current),
             #right side
-            mock.call.calc(right_data_calc[:-2:], pic_next),
-            mock.call.calc(right_data_calc[:-1:], pic_next),
+            mock.call.calc(mock.ANY, pic_next),
+            mock.call.calc(mock.ANY, pic_next),
             mock.call.calc(right_data_calc, pic_next)
         ]
         expect_renderer_render = [
@@ -153,6 +153,116 @@ class ToLeft(unittest.TestCase):
         expect_ui = list(itertools.repeat(mock.call.draw(mock.ANY), 101))
 
         self.instance.to_left()
+
+        self.storage_mock.assert_has_calls(expect_storage)
+        self.renderer_mock.calc.assert_has_calls(expect_renderer_calc)
+        self.renderer_mock.assert_has_calls(expect_renderer_calc + expect_renderer_render)
+        self.ui_mock.assert_has_calls(expect_ui)
+
+class ToRight(unittest.TestCase):
+
+    def setUp(self):
+        self.storage_mock = mock.Mock()
+        self.renderer_mock = mock.Mock()
+        self.ui_mock = mock.Mock(spec=['draw'])
+        self.instance = Slider(self.storage_mock, self.renderer_mock, self.ui_mock)
+
+    def test_StorageNoData(self):
+        self.storage_mock.mock_add_spec(['get_current'])
+        self.storage_mock.get_current.return_value = None
+
+        self.renderer_mock.mock_add_spec(['render_default'])
+        pic_mock = object()
+        self.renderer_mock.render_default.return_value = pic_mock
+
+        self.instance.to_right()
+
+        self.storage_mock.get_current.assert_called_once_with()
+        self.renderer_mock.render_default.assert_called_once_with()
+        self.ui_mock.draw.assert_called_once_with(pic_mock)
+
+    def test_StorageNoPrevious(self):
+        self.storage_mock.mock_add_spec(['get_current', 'get_next', 'step_previous'])
+        pic_current = object()
+        self.storage_mock.get_current.side_effect = (pic_current, None)
+        pic_next_1, pic_next_2 = object(), object()
+        self.storage_mock.get_next.side_effect = (pic_next_1, pic_next_2, None)
+        expect_storage = (
+            mock.call.get_current(),
+            mock.call.get_next(0), mock.call.get_next(1), mock.call.get_next(2),
+            mock.call.step_previous(),
+            mock.call.get_current()
+        )
+
+        self.renderer_mock.mock_add_spec(['calc', 'render_to_right'])
+        calc_result = (
+            # only left side
+            {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False}
+        )
+        self.renderer_mock.calc.side_effect = calc_result
+        pic_ui = object()
+        self.renderer_mock.render_to_right.return_value = pic_ui
+        expect_renderer = (
+            mock.call.calc(mock.ANY, mock.ANY), mock.call.calc(mock.ANY, mock.ANY),
+            mock.call.render_to_right([pic_current, pic_next_1, pic_next_2], pic_current, 100)
+        )
+
+        self.instance.to_right()
+
+        self.storage_mock.assert_has_calls(expect_storage)
+        self.renderer_mock.assert_has_calls(expect_renderer)
+        self.ui_mock.draw.assert_called_once_with(pic_ui)
+
+    def test_RendererLimit(self):
+        self.storage_mock.mock_add_spec(['get_previous', 'get_current', 'get_next', 'step_previous'])
+        left_data = [object(), object(), object()]
+        self.storage_mock.get_previous.side_effect = left_data[::-1]
+        pic_current, pic_previous = object(), object()
+        current_data = [pic_current, pic_previous]
+        self.storage_mock.get_current.side_effect = current_data
+        right_data = [object(), object(), object()]
+        self.storage_mock.get_next.side_effect = right_data
+        expect_storage = (
+            mock.call.get_current(),
+            mock.call.get_next(0), mock.call.get_next(1), mock.call.get_next(2),
+            mock.call.step_previous(),
+            mock.call.get_current(),
+            mock.call.get_previous(0), mock.call.get_previous(1), mock.call.get_previous(2),
+        )
+
+        self.renderer_mock.mock_add_spec(['calc', 'render_to_right'])
+        calc_result = (
+            # right side
+            {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 2, 'right_done': True},
+            # left side
+            {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
+            {'left': 0, 'left_done': True, 'right': 2, 'right_done': False}
+        )
+        self.renderer_mock.calc.side_effect = calc_result
+        self.renderer_mock.render_to_right.side_effect = itertools.repeat(object, 101)
+        left_data_calc = left_data[::] + [pic_previous]
+        right_data_calc = [pic_current] + right_data[::]
+        expect_renderer_calc = [
+            #right side
+            mock.call.calc(mock.ANY, pic_current),
+            mock.call.calc(mock.ANY, pic_current),
+            mock.call.calc(right_data_calc, pic_current),
+            #left side
+            mock.call.calc(mock.ANY, pic_previous),
+            mock.call.calc(mock.ANY, pic_previous),
+            mock.call.calc(left_data_calc, pic_previous),
+        ]
+        expect_renderer_render = [
+            mock.call.render_to_right(left_data + current_data[::-1] + right_data, pic_previous, i) for i in range(101)
+        ]
+
+        expect_ui = list(itertools.repeat(mock.call.draw(mock.ANY), 101))
+
+        self.instance.to_right()
 
         self.storage_mock.assert_has_calls(expect_storage)
         self.renderer_mock.calc.assert_has_calls(expect_renderer_calc)
