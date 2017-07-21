@@ -214,6 +214,49 @@ class ToRight(unittest.TestCase):
         self.renderer_mock.assert_has_calls(expect_renderer)
         self.ui_mock.draw.assert_called_once_with(pic_ui)
 
+    def test_StorageLimit(self):
+        self.storage_mock.mock_add_spec(['get_previous', 'get_current', 'get_next', 'step_previous'])
+        left_data = [None, object(), object()]
+        self.storage_mock.get_previous.side_effect = left_data[::-1]
+        pic_previous = object()
+        current_data = [object(), pic_previous]
+        self.storage_mock.get_current.side_effect = current_data
+        right_data = [object(), object(), None]
+        self.storage_mock.get_next.side_effect = right_data
+        expect_storage = (
+            mock.call.get_current(),
+            mock.call.get_next(0), mock.call.get_next(1), mock.call.get_next(2),
+            mock.call.step_previous(),
+            mock.call.get_current(),
+            mock.call.get_previous(0), mock.call.get_previous(1), mock.call.get_previous(2),
+        )
+
+        self.renderer_mock.mock_add_spec(['calc', 'render_to_right'])
+        calc_result = (
+            # left side
+            {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
+            # right side
+            {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False}
+        )
+        self.renderer_mock.calc.side_effect = calc_result
+        render_result = itertools.repeat(object, 101)
+        self.renderer_mock.render_to_right.side_effect = render_result
+        expect_renderer_calc = list(itertools.repeat(mock.call.calc(mock.ANY, mock.ANY), len(calc_result)))
+        expect_renderer_render = [
+            mock.call.render_to_right(left_data[1::] + current_data[::-1] + right_data[:-1:], pic_previous, i) for i in range(101)
+        ]
+
+        expect_ui = (mock.call.draw(pic) for pic in render_result)
+
+        self.instance.to_right()
+
+        self.storage_mock.assert_has_calls(expect_storage)
+        self.assertEqual(self.renderer_mock.render_to_right.call_count, len(expect_renderer_render))
+        self.renderer_mock.assert_has_calls(expect_renderer_calc + expect_renderer_render)
+        self.ui_mock.assert_has_calls(expect_ui)
+
     def test_RendererLimit(self):
         self.storage_mock.mock_add_spec(['get_previous', 'get_current', 'get_next', 'step_previous'])
         left_data = [object(), object(), object()]
