@@ -12,9 +12,9 @@ class Renderer(object):
         fill_left = half_width_center
         left = center
         left_done = False
-        for pic in pics[left - 1::-1]:
-            left -= 1
-            fill_left += pic.width // (pic.height / self._height)
+        for i in range(center - 1, -1, -1):
+            left = i
+            fill_left += pics[i].width // (pics[i].height / self._height)
             fill_left += self._distance
             if fill_left >= (self._width // 2):
                 left_done = True
@@ -23,7 +23,7 @@ class Renderer(object):
         fill_right = half_width_center
         right = center
         right_done = False
-        for pic in pics[right + 1::]:
+        for pic in pics[center + 1::]:
             right += 1
             fill_right += pic.width // (pic.height / self._height)
             fill_right += self._distance
