@@ -779,12 +779,12 @@ Renderer заранее знает высоту\ширину итоговой л
       <data key="d4"/>
       <data key="d6">
         <y:UMLNoteNode>
-          <y:Geometry height="99.99999999999994" width="436.7017132056453" x="-13.827894035619465" y="1549.2568129032247"/>
+          <y:Geometry height="99.99999999999994" width="428.90340266801076" x="-3.6147327452968057" y="1549.2568129032247"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="left" autoSizePolicy="node_size" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="99.99999999999994" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="436.7017132056453" x="0.0" y="5.6843418860808015E-14">Обе списка содединяем и ц цикле генерим итоговую картинку
+          <y:NodeLabel alignment="left" autoSizePolicy="node_size" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="99.99999999999994" horizontalTextPosition="center" iconTextGap="4" modelName="custom" textColor="#000000" verticalTextPosition="bottom" visible="true" width="428.90340266801076" x="0.0" y="5.6843418860808015E-14">Обе списка содединяем и ц цикле генерим итоговую картинку
 и отправляем в UI для отрисовки.
-blend - на сколько процентов выполнен сдвиг.<y:LabelModel>
+shift - на сколько процентов выполнен сдвиг.<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -1579,7 +1579,7 @@ right_list = []<y:LabelModel>
           <y:Path sx="0.0" sy="462.5185086567151" tx="0.0" ty="-18.606278549676972"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="321.21484375" x="28.108076305058148" y="-20.28246421344579">render(left_list + right_list, pic_next, blend: Number)<y:LabelModel>
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="313.779296875" x="28.58300513298218" y="-20.28246421344579">render(left_list + right_list, pic_next, shift: Number)<y:LabelModel>
               <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -1646,8 +1646,8 @@ right_list = []<y:LabelModel>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-392.70238980284614" ty="-2.7973394434930015">
-            <y:Point x="367.9455567233354" y="1599.2568129032247"/>
-            <y:Point x="367.9455567233354" y="1599.2568129032247"/>
+            <y:Point x="371.1025597340881" y="1599.2568129032247"/>
+            <y:Point x="371.1025597340881" y="1599.2568129032247"/>
           </y:Path>
           <y:LineStyle color="#000000" type="dashed" width="1.0"/>
           <y:Arrows source="none" target="plain"/>
