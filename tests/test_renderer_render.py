@@ -1,7 +1,6 @@
 import unittest
 from PIL import Image, ImageChops
 
-
 from libs.renderer import Renderer
 
 
@@ -14,8 +13,16 @@ def join_pics(pics, size):
     return result
 
 
-class RenderToLeft(unittest.TestCase):
+class RenderDefault(unittest.TestCase):
+    def setUp(self):
+        self.instance = Renderer(width=400, height=100, distance=20)
 
+    def test_Render(self):
+        result = self.instance.render_default()
+        self.assertEqual(result.size, (400, 100))
+
+
+class RenderToLeft(unittest.TestCase):
     def setUp(self):
         self.instance = Renderer(width=400, height=100, distance=20)
 

@@ -37,6 +37,9 @@ class Renderer(object):
 
         return {'left': left, 'left_done': left_done, 'right': right, 'right_done': right_done}
 
+    def render_default(self):
+        return Image.new('RGB', (self._width, self._height), 'black')
+    
     def render_to_left(self, pics, pic_next, shift):
         idx_next = pics.index(pic_next)
         pics = self._normalize_pictures(pics)
