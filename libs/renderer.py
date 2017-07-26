@@ -74,9 +74,7 @@ class Renderer(object):
             offset_left = max(left, 0)
             offset_right = min(right, tape.width)
             box = (offset_left, 0, offset_right, self._height)
-            print('\ncrop_box: ', box)
             tape = tape.crop(box)
-            print('\ncrop_tape_width: ', tape.width)
 
         if tape.width < self._width:
             result_tape = Image.new('RGB', (self._width, self._height), 'black')
