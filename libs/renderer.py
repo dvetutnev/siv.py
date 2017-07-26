@@ -48,21 +48,11 @@ class Renderer(object):
             tape.paste(p, (offset, 0))
             offset += p.width + self._distance
 
-        center = 0
-        if shift == 0:
-            center = sum(p.width + self._distance for p in pics[:idx_next - 1:])
-            center += int(pics[idx_next - 1].width / 2)
-            half_width = int(self._width / 2)
-        elif 0 < shift < 100:
-            center = sum(p.width + self._distance for p in pics[:idx_next - 1:])
-            center += int(pics[idx_next - 1].width / 2)
-            p_current, p_next = pics[idx_next - 1], pics[idx_next]
-            center += int((ceil(p_current.width / 2) + self._distance + int(p_next.width / 2)) * (shift / 100))
-            half_width = int(self._width / 2)
-        elif shift == 100:
-            center = sum(p.width + self._distance for p in pics[:idx_next:])
-            center += int(pics[idx_next].width / 2)
-            half_width = int(self._width / 2)
+        center = sum(p.width + self._distance for p in pics[:idx_next - 1:])
+        center += int(pics[idx_next - 1].width / 2)
+        p_current, p_next = pics[idx_next - 1], pics[idx_next]
+c        center += int((ceil(p_current.width / 2) + self._distance + int(p_next.width / 2)) * (shift / 100))
+        half_width = int(self._width / 2)
 
         left = center - half_width
         right = center + self._width - half_width
