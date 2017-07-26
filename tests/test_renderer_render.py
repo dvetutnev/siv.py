@@ -1,5 +1,5 @@
 import unittest
-from PIL import Image
+from PIL import Image, ImageChops
 
 
 from libs.renderer import Renderer
@@ -13,6 +13,7 @@ def join_pics(pics, size):
         offset += p.width
     return result
 
+
 class RenderToLeft(unittest.TestCase):
 
     def setUp(self):
@@ -22,7 +23,7 @@ class RenderToLeft(unittest.TestCase):
         next_pic = Image.new('RGB', (182, 200), 'green')
         pics_input = (
             Image.new('RGB', (100, 100), 'grey'),
-            Image.new('RGB', (50, 50), 'cyan'),
+            Image.new('RGB', (35, 50), 'cyan'),
             Image.new('RGB', (200, 200), 'red'),
             next_pic
         )
@@ -38,7 +39,10 @@ class RenderToLeft(unittest.TestCase):
         )
         correct_result = join_pics(pics_output, (400, 100))
         correct_result.save('to_left_0.jpg')
-        pass
+        result = self.instance.render_to_left(pics_input, next_pic, 0)
+        result.save('to_left_0_.jpg')
+        self.assertEqual(result.size, correct_result.size)
+        self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
 
     def test_Shift_50(self):
         next_pic = Image.new('RGB', (242, 200), 'pink')
@@ -60,7 +64,10 @@ class RenderToLeft(unittest.TestCase):
         )
         correct_result = join_pics(pics_output, (400, 100))
         correct_result.save('to_left_50.jpg')
-        pass
+        result = self.instance.render_to_left(pics_input, next_pic, 50)
+        result.save('to_left_50_.jpg')
+        self.assertEqual(result.size, correct_result.size)
+        self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
 
     def test_Shift_100(self):
         next_pic = Image.new('RGB', (99, 100), 'red')
@@ -84,4 +91,12 @@ class RenderToLeft(unittest.TestCase):
         )
         correct_result = join_pics(pics_output, (400, 100))
         correct_result.save('to_left_100.jpg')
-        pass
+        result = self.instance.render_to_left(pics_input, next_pic, 100)
+        result.save('to_left_100_.jpg')
+        self.assertEqual(result.size, correct_result.size)
+        self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
+
+    def test_diff(self):
+        p1 = Image.new('RGB', (400, 100), 'green')
+        p2 = Image.new('RGB', (400, 100), 'green')
+        self.assertIsNone(ImageChops.difference(p1, p2).getbbox())

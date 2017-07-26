@@ -1,3 +1,6 @@
+from PIL import Image
+
+
 class Renderer(object):
 
     def __init__(self, width, height, distance):
@@ -32,3 +35,48 @@ class Renderer(object):
                 break
 
         return {'left': left, 'left_done': left_done, 'right': right, 'right_done': right_done}
+
+    def render_to_left(self, pics, pic_next, shift):
+        idx_next = pics.index(pic_next)
+        pics = self._normalize_pictures(pics)
+        widths = (p.width for p in pics)
+        total_width = sum(widths) + (self._distance * (len(pics) - 1))
+        tape = Image.new('RGB', (total_width, self._height), 'black')
+        offset = 0
+        for p in pics:
+            tape.paste(p, (offset, 0))
+            offset += p.width + self._distance
+
+        left, right = 0, 0
+        if shift == 0:
+            center = sum(p.width + self._distance for p in pics[:idx_next - 1:])
+            center += int(pics[idx_next - 1].width / 2)
+            half_width = int(self._width / 2)
+            left = center - half_width
+            right = center + self._width - half_width
+            print('\nleft, center, right: ', left, center, right)
+            print('\ntape.width: ', tape.width)
+
+        if left > 0 or right < tape.width:
+            offset_left = max(left, 0)
+            offset_right = min(right, tape.width)
+            box = (offset_left, 0, offset_right, self._height)
+            print('\ncrop_box: ', box)
+            tape = tape.crop(box)
+            print('\ncrop_tape_width: ', tape.width)
+
+        if tape.width < self._width:
+            result_tape = Image.new('RGB', (self._width, self._height), 'black')
+            offset = max(0, -left)
+            result_tape.paste(tape, (offset, 0))
+            tape = result_tape
+
+        return tape
+
+    def _normalize_pictures(self, pics):
+        result = []
+        for pic in pics:
+            width = int(pic.width * (self._height / pic.height))
+            p = pic.resize((width, self._height))
+            result.append(p)
+        return result
