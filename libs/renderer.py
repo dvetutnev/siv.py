@@ -40,13 +40,7 @@ class Renderer(object):
     def render_to_left(self, pics, pic_next, shift):
         idx_next = pics.index(pic_next)
         pics = self._normalize_pictures(pics)
-        widths = (p.width for p in pics)
-        total_width = sum(widths) + (self._distance * (len(pics) - 1))
-        tape = Image.new('RGB', (total_width, self._height), 'black')
-        offset = 0
-        for p in pics:
-            tape.paste(p, (offset, 0))
-            offset += p.width + self._distance
+        tape = self._make_tape(pics)
 
         center = sum(p.width + self._distance for p in pics[:idx_next - 1:])
         center += int(pics[idx_next - 1].width / 2)
@@ -78,3 +72,13 @@ class Renderer(object):
             p = pic.resize((width, self._height))
             result.append(p)
         return result
+
+    def _make_tape(self, pics):
+        widths = (p.width for p in pics)
+        total_width = sum(widths) + (self._distance * (len(pics) - 1))
+        tape = Image.new('RGB', (total_width, self._height), 'black')
+        offset = 0
+        for p in pics:
+            tape.paste(p, (offset, 0))
+            offset += p.width + self._distance
+        return tape
