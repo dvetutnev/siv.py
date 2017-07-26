@@ -45,22 +45,22 @@ class RenderToLeft(unittest.TestCase):
         self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
 
     def test_Shift_50(self):
-        next_pic = Image.new('RGB', (242, 200), 'pink')
+        next_pic = Image.new('RGB', (114, 100), 'pink')
         pics_input = (
-            Image.new('RGB', (75, 150), 'red'),
-            Image.new('RGB', (40, 50), 'green'),
+            Image.new('RGB', (73, 100), 'red'),
+            Image.new('RGB', (79, 100), 'green'),
             next_pic,
             Image.new('RGB', (160, 160), 'orange')
         )
         pics_output = (
             Image.new('RGB', (10, 100), 'black'),
-            Image.new('RGB', (50, 100), 'red'),
+            Image.new('RGB', (73, 100), 'red'),
             Image.new('RGB', (20, 100), 'black'),
-            Image.new('RGB', (80, 100), 'green'),
+            Image.new('RGB', (79, 100), 'green'),
             Image.new('RGB', (20, 100), 'black'),
-            Image.new('RGB', (121, 100), 'pink'),
+            Image.new('RGB', (114, 100), 'pink'),
             Image.new('RGB', (20, 100), 'black'),
-            Image.new('RGB', (69, 100), 'orange')
+            Image.new('RGB', (64, 100), 'orange')
         )
         correct_result = join_pics(pics_output, (400, 100))
         correct_result.save('to_left_50.jpg')
@@ -79,7 +79,7 @@ class RenderToLeft(unittest.TestCase):
             Image.new('RGB', (100, 100), 'magenta')
         )
         pics_output = (
-            Image.new('RGB', (25, 100), 'navy'),
+            Image.new('RGB', (26, 100), 'navy'),
             Image.new('RGB', (20, 100), 'black'),
             Image.new('RGB', (85, 100), 'lime'),
             Image.new('RGB', (20, 100), 'black'),
@@ -87,7 +87,7 @@ class RenderToLeft(unittest.TestCase):
             Image.new('RGB', (20, 100), 'black'),
             Image.new('RGB', (80, 100), 'green'),
             Image.new('RGB', (20, 100), 'black'),
-            Image.new('RGB', (31, 100), 'magenta')
+            Image.new('RGB', (30, 100), 'magenta')
         )
         correct_result = join_pics(pics_output, (400, 100))
         correct_result.save('to_left_100.jpg')
