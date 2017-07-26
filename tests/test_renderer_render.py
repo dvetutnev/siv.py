@@ -38,9 +38,7 @@ class RenderToLeft(unittest.TestCase):
             Image.new('RGB', (39, 100), 'black')
         )
         correct_result = join_pics(pics_output, (400, 100))
-        correct_result.save('to_left_0.jpg')
         result = self.instance.render_to_left(pics_input, next_pic, 0)
-        result.save('to_left_0_.jpg')
         self.assertEqual(result.size, correct_result.size)
         self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
 
@@ -63,9 +61,7 @@ class RenderToLeft(unittest.TestCase):
             Image.new('RGB', (64, 100), 'orange')
         )
         correct_result = join_pics(pics_output, (400, 100))
-        correct_result.save('to_left_50.jpg')
         result = self.instance.render_to_left(pics_input, next_pic, 50)
-        result.save('to_left_50_.jpg')
         self.assertEqual(result.size, correct_result.size)
         self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
 
@@ -90,13 +86,6 @@ class RenderToLeft(unittest.TestCase):
             Image.new('RGB', (30, 100), 'magenta')
         )
         correct_result = join_pics(pics_output, (400, 100))
-        correct_result.save('to_left_100.jpg')
         result = self.instance.render_to_left(pics_input, next_pic, 100)
-        result.save('to_left_100_.jpg')
         self.assertEqual(result.size, correct_result.size)
         self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
-
-    def test_diff(self):
-        p1 = Image.new('RGB', (400, 100), 'green')
-        p2 = Image.new('RGB', (400, 100), 'green')
-        self.assertIsNone(ImageChops.difference(p1, p2).getbbox())
