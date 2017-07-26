@@ -51,7 +51,7 @@ class Renderer(object):
         center = sum(p.width + self._distance for p in pics[:idx_next - 1:])
         center += int(pics[idx_next - 1].width / 2)
         p_current, p_next = pics[idx_next - 1], pics[idx_next]
-c        center += int((ceil(p_current.width / 2) + self._distance + int(p_next.width / 2)) * (shift / 100))
+        center += int((ceil(p_current.width / 2) + self._distance + int(p_next.width / 2)) * (shift / 100))
         half_width = int(self._width / 2)
 
         left = center - half_width
