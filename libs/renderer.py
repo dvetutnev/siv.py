@@ -72,7 +72,6 @@ class Renderer(object):
         idx_next = pics.index(pic_next)
         pics = self._normalize_pictures(pics)
         tape = self._make_tape(pics)
-        tape.save(str(shift) + '__.jpg')
 
         center = sum(p.width + self._distance for p in pics[:idx_next + 1:])
         center += int(pics[idx_next + 1].width / 2)
