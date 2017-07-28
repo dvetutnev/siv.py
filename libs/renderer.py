@@ -53,20 +53,7 @@ class Renderer(object):
 
         left = center - half_width
         right = center + self._width - half_width
-
-        if left > 0 or right < tape.width:
-            offset_left = max(left, 0)
-            offset_right = min(right, tape.width)
-            box = (offset_left, 0, offset_right, self._height)
-            tape = tape.crop(box)
-
-        if tape.width < self._width:
-            result_tape = Image.new('RGB', (self._width, self._height), 'black')
-            offset = max(0, -left)
-            result_tape.paste(tape, (offset, 0))
-            tape = result_tape
-
-        return tape
+        return self._normalize_tape(tape, left, right)
 
     def render_to_right(self, pics, pic_next, shift):
         idx_next = pics.index(pic_next)
@@ -81,22 +68,8 @@ class Renderer(object):
 
         left = center - half_width
         right = center + self._width - half_width
-        return self.__normalize_tape(tape, self._width, self._height)
-'''
-        if left > 0 or right < tape.width:
-            offset_left = max(left, 0)
-            offset_right = min(right, tape.width)
-            box = (offset_left, 0, offset_right, self._height)
-            tape = tape.crop(box)
+        return self._normalize_tape(tape, left, right)
 
-        if tape.width < self._width:
-            result_tape = Image.new('RGB', (self._width, self._height), 'black')
-            offset = max(0, -left)
-            result_tape.paste(tape, (offset, 0))
-            tape = result_tape
-
-        return tape
-'''
     def _normalize_pictures(self, pics):
         result = []
         for pic in pics:
@@ -121,7 +94,6 @@ class Renderer(object):
             offset_right = min(right, tape.width)
             box = (offset_left, 0, offset_right, self._height)
             tape = tape.crop(box)
-
         if tape.width < self._width:
             result_tape = Image.new('RGB', (self._width, self._height), 'black')
             offset = max(0, -left)
