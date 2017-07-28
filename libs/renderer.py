@@ -39,7 +39,7 @@ class Renderer(object):
 
     def render_default(self):
         return Image.new('RGB', (self._width, self._height), 'black')
-    
+
     def render_to_left(self, pics, pic_next, shift):
         idx_next = pics.index(pic_next)
         pics = self._normalize_pictures(pics)
@@ -49,6 +49,35 @@ class Renderer(object):
         center += int(pics[idx_next - 1].width / 2)
         p_current, p_next = pics[idx_next - 1], pics[idx_next]
         center += int((ceil(p_current.width / 2) + self._distance + int(p_next.width / 2)) * (shift / 100))
+        half_width = int(self._width / 2)
+
+        left = center - half_width
+        right = center + self._width - half_width
+
+        if left > 0 or right < tape.width:
+            offset_left = max(left, 0)
+            offset_right = min(right, tape.width)
+            box = (offset_left, 0, offset_right, self._height)
+            tape = tape.crop(box)
+
+        if tape.width < self._width:
+            result_tape = Image.new('RGB', (self._width, self._height), 'black')
+            offset = max(0, -left)
+            result_tape.paste(tape, (offset, 0))
+            tape = result_tape
+
+        return tape
+
+    def render_to_right(self, pics, pic_next, shift):
+        idx_next = pics.index(pic_next)
+        pics = self._normalize_pictures(pics)
+        tape = self._make_tape(pics)
+        tape.save(str(shift) + '__.jpg')
+
+        center = sum(p.width + self._distance for p in pics[:idx_next + 1:])
+        center += int(pics[idx_next + 1].width / 2)
+        p_current, p_next = pics[idx_next + 1], pics[idx_next]
+        center -= ceil((int(p_current.width / 2) + self._distance + ceil(p_next.width / 2)) * (shift / 100))
         half_width = int(self._width / 2)
 
         left = center - half_width
