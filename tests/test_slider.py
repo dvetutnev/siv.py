@@ -164,6 +164,7 @@ class ToLeft(unittest.TestCase):
         self.renderer_mock.assert_has_calls(expect_renderer_calc + expect_renderer_render)
         self.ui_mock.assert_has_calls(expect_ui)
 
+
 class ToRight(unittest.TestCase):
 
     def setUp(self):
