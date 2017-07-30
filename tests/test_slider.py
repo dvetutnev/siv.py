@@ -1,5 +1,6 @@
 import unittest
 from unittest import mock
+from unittest.mock import patch
 import itertools
 
 
@@ -13,6 +14,11 @@ class ToLeft(unittest.TestCase):
         self.renderer_mock = mock.Mock()
         self.ui_mock = mock.Mock(spec=['draw'])
         self.instance = Slider(self.storage_mock, self.renderer_mock, self.ui_mock)
+        self.patcher = patch('libs.slider.sleep')
+        self.patcher.start()
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_StorageNoData(self):
         self.storage_mock.mock_add_spec(['get_current'])
@@ -166,6 +172,11 @@ class ToRight(unittest.TestCase):
         self.renderer_mock = mock.Mock()
         self.ui_mock = mock.Mock(spec=['draw'])
         self.instance = Slider(self.storage_mock, self.renderer_mock, self.ui_mock)
+        self.patcher = patch('libs.slider.sleep')
+        self.patcher.start()
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_StorageNoData(self):
         self.storage_mock.mock_add_spec(['get_current'])

@@ -1,3 +1,6 @@
+from time import sleep
+
+
 class Slider(object):
     
     def __init__(self, storage, renderer, ui):
@@ -26,6 +29,7 @@ class Slider(object):
         for i in range(101):
             pic = self._renderer.render_to_left(side_left + side_right, pic_next, i)
             self._ui.draw(pic)
+            sleep(0.01)
 
     def to_right(self):
         pic_current = self._storage.get_current()
@@ -48,6 +52,7 @@ class Slider(object):
         for i in range(101):
             pic = self._renderer.render_to_right(side_left + side_right, pic_previous, i)
             self._ui.draw(pic)
+            sleep(0.01)
 
     def _get_side_left(self, pic_center):
         result = [pic_center]
