@@ -81,3 +81,6 @@ class Calc(unittest.TestCase):
 
         result = self.instance.calc(pictures, pic_center)
         self.assertEqual(result, result_correct)
+
+if __name__ == '__main__':
+    unittest.main()

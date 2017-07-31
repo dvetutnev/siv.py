@@ -175,3 +175,6 @@ class RenderToRight(unittest.TestCase):
         result = self.instance.render_to_right(pics_input, next_pic, 100)
         self.assertEqual(result.size, correct_result.size)
         self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
+
+if __name__ == '__main__':
+    unittest.main()
