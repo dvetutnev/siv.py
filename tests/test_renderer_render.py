@@ -122,8 +122,6 @@ class RenderToRight(unittest.TestCase):
         )
         correct_result = join_pics(pics_output, (400, 100))
         result = self.instance.render_to_right(pics_input, next_pic, 0)
-        correct_result.save('0.jpg')
-        result.save('0_.jpg')
         self.assertEqual(result.size, correct_result.size)
         self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
 
@@ -152,8 +150,6 @@ class RenderToRight(unittest.TestCase):
         )
         correct_result = join_pics(pics_output, (400, 100))
         result = self.instance.render_to_right(pics_input, next_pic, 50)
-        correct_result.save('50.jpg')
-        result.save('50_.jpg')
         self.assertEqual(result.size, correct_result.size)
         self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
 
@@ -177,7 +173,5 @@ class RenderToRight(unittest.TestCase):
         )
         correct_result = join_pics(pics_output, (400, 100))
         result = self.instance.render_to_right(pics_input, next_pic, 100)
-        correct_result.save('100.jpg')
-        result.save('100_.jpg')
         self.assertEqual(result.size, correct_result.size)
         self.assertIsNone(ImageChops.difference(result, correct_result).getbbox())
