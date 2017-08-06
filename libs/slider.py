@@ -9,75 +9,77 @@ class Slider(object):
         self._ui = ui
 
     def to_left(self):
-        pic_current = self._storage.get_current()
-        if pic_current is None:
-            pic = self._renderer.render_default()
-            self._ui.draw(pic)
+        imgs_left = self._get_side_left(0)
+        if not imgs_left:
+            img_ui = self._renderer.render_default()
+            self._ui.draw(img_ui)
             return
+        img_current = imgs_left[-1]
 
-        side_left = self._get_side_left(pic_current)
-
-        self._storage.step_next()
-        pic_next = self._storage.get_current()
-        if pic_next is None:
-            pic_ui = self._renderer.render_to_left(side_left, pic_current, 100)
-            self._ui.draw(pic_ui)
+        imgs_right = self._get_side_right(1)
+        if not imgs_right:
+            img_ui = self._renderer.render_to_left(imgs_left, img_current, 100)
+            self._ui.draw(img_ui)
             return
-
-        side_right = self._get_right_side(pic_next)
+        img_next = imgs_right[0]
 
         for i in range(101):
-            pic = self._renderer.render_to_left(side_left + side_right, pic_next, i)
+            pic = self._renderer.render_to_left(imgs_left + imgs_right, img_next, i)
             self._ui.draw(pic)
-            sleep(0.01)
+            sleep(0.001)
+        self._storage.step_next()
 
     def to_right(self):
-        pic_current = self._storage.get_current()
-        if pic_current is None:
-            pic = self._renderer.render_default()
-            self._ui.draw(pic)
+        imgs_right = self._get_side_right(0)
+        if not imgs_right:
+            img_ui = self._renderer.render_default()
+            self._ui.draw(img_ui)
             return
+        img_current = imgs_right[0]
 
-        side_right = self._get_right_side(pic_current)
-
-        self._storage.step_previous()
-        pic_previous = self._storage.get_current()
-        if pic_previous is None:
-            pic_ui = self._renderer.render_to_right(side_right, pic_current, 100)
-            self._ui.draw(pic_ui)
+        imgs_left = self._get_side_left(-1)
+        if not imgs_left:
+            img_ui = self._renderer.render_to_right(imgs_right, img_current, 100)
+            self._ui.draw(img_ui)
             return
-
-        side_left = self._get_side_left(pic_previous)
+        img_previous = imgs_left[-1]
 
         for i in range(101):
-            pic = self._renderer.render_to_right(side_left + side_right, pic_previous, i)
+            pic = self._renderer.render_to_right(imgs_left + imgs_right, img_previous, i)
             self._ui.draw(pic)
-            sleep(0.01)
+            sleep(0.001)
+        self._storage.step_previous()
 
-    def _get_side_left(self, pic_center):
-        result = [pic_center]
-        i = 0
+    def _get_side_left(self, offset):
+        img_center = self._storage.get(offset)
+        if img_center is None:
+            return []
+        result = [img_center]
+        offset -= 1
         while True:
-            pic = self._storage.get_previous(i)
-            if pic is None:
-                break
-            result.insert(0, pic)
-            attempt = self._renderer.calc(result, pic_center)
+            attempt = self._renderer.calc(result, img_center)
             if attempt['left_done']:
                 break
-            i += 1
+            img = self._storage.get(offset)
+            if img is None:
+                break
+            result.insert(0, img)
+            offset -= 1
         return result
 
-    def _get_right_side(self, pic_center):
-        result = [pic_center]
-        i = 0
+    def _get_side_right(self, offset):
+        img_center = self._storage.get(offset)
+        if img_center is None:
+            return []
+        result = [img_center]
+        offset += 1
         while True:
-            pic = self._storage.get_next(i)
-            if pic is None:
-                break
-            result.append(pic)
-            attempt = self._renderer.calc(result, pic_center)
+            attempt = self._renderer.calc(result, img_center)
             if attempt['right_done']:
                 break
-            i += 1
+            img = self._storage.get(offset)
+            if img is None:
+                break
+            result.append(img)
+            offset += 1
         return result

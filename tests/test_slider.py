@@ -20,113 +20,150 @@ class ToLeft(unittest.TestCase):
         self.patcher.stop()
 
     def test_StorageNoData(self):
-        self.storage_mock.mock_add_spec(['get_current'], spec_set=True)
-        self.storage_mock.get_current.return_value = None
+        storage = self.storage_mock
+        renderer = self.renderer_mock
+        ui = self.ui_mock
 
-        self.renderer_mock.mock_add_spec(['render_default'], spec_set=True)
-        pic_mock = object()
-        self.renderer_mock.render_default.return_value = pic_mock
+        storage.mock_add_spec(['get'], spec_set=True)
+        storage.get.return_value = None
+        renderer.mock_add_spec(['render_default'], spec_set=True)
+        img_mock = Mock(spec_set=[])
+        renderer.render_default.return_value = img_mock
 
         self.instance.to_left()
 
-        self.storage_mock.get_current.assert_called_once_with()
-        self.renderer_mock.render_default.assert_called_once_with()
-        self.ui_mock.draw.assert_called_once_with(pic_mock)
+        storage.get.assert_called_once_with(0)
+        renderer.render_default.assert_called_once_with()
+        ui.draw.assert_called_once_with(img_mock)
 
     def test_StorageNoNext(self):
-        self.storage_mock.mock_add_spec(['get_previous', 'get_current', 'step_next'], spec_set=True)
-        pic_current = object()
-        self.storage_mock.get_current.side_effect = [pic_current, None]
-        pic_previous_1, pic_previous_2 = object(), object()
-        self.storage_mock.get_previous.side_effect = [pic_previous_1, pic_previous_2, None]
-        expect_storage = [
-            call.get_current(),
-            call.get_previous(0), call.get_previous(1), call.get_previous(2),
-            call.step_next(),
-            call.get_current()
+        storage = self.storage_mock
+        renderer = self.renderer_mock
+        ui = self.ui_mock
+
+        storage.mock_add_spec(['get'], spec_set=True)
+        img_current = Mock(spec_set=[], name='image_current')
+        imgs = {
+            -3: None,
+            -2: Mock(spec_set=[], name='img_-2'),
+            -1: Mock(spec_set=[], name='img_-1'),
+            0: img_current,
+            1: None
+        }
+
+        def _get(offset):
+            return imgs[offset]
+
+        storage.get.side_effect = _get
+        expect_storage_get = [
+            call.get(0), call.get(-1), call.get(-2), call.get(-3),
+            call.get(1)
         ]
 
-        self.renderer_mock.mock_add_spec(['calc', 'render_to_left'], spec_set=True)
+        renderer.mock_add_spec(['calc', 'render_to_left'], spec_set=True)
         calc_result = [
             # only left side
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
-            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False}
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 2, 'right_done': False}
         ]
-        self.renderer_mock.calc.side_effect = calc_result
-        pic_ui = object()
-        self.renderer_mock.render_to_left.return_value = pic_ui
-        expect_renderer = [
-            call.calc(ANY, ANY), call.calc(ANY, ANY),
-            call.render_to_left([pic_previous_2, pic_previous_1, pic_current], pic_current, 100)
-        ]
+        renderer.calc.side_effect = calc_result
+        expect_renderer_calc = list(itertools.repeat(call.calc(ANY, ANY), len(calc_result)))
+        img_ui = Mock(spec_set=[])
+        renderer.render_to_left.return_value = img_ui
+        expect_renderer_render = [call.render_to_left([imgs[-2], imgs[-1], imgs[0]], img_current, 100)]
 
         self.instance.to_left()
 
-        self.storage_mock.assert_has_calls(expect_storage)
-        self.renderer_mock.assert_has_calls(expect_renderer)
-        self.ui_mock.draw.assert_called_once_with(pic_ui)
+        storage.assert_has_calls(expect_storage_get)
+        renderer.assert_has_calls(expect_renderer_calc + expect_renderer_render)
+        ui.draw.assert_called_once_with(img_ui)
 
     def test_StorageLimit(self):
-        self.storage_mock.mock_add_spec(['get_previous', 'get_current', 'get_next', 'step_next'], spec_set=True)
-        left_data = [None, object(), object()]
-        self.storage_mock.get_previous.side_effect = left_data[::-1]
-        pic_next = object()
-        current_data = [object(), pic_next]
-        self.storage_mock.get_current.side_effect = current_data
-        right_data = [object(), object(), None]
-        self.storage_mock.get_next.side_effect = right_data
-        expect_storage = [
-            call.get_current(),
-            call.get_previous(0), call.get_previous(1), call.get_previous(2),
-            call.step_next(),
-            call.get_current(),
-            call.get_next(0), call.get_next(1), call.get_next(2)
+        storage = self.storage_mock
+        renderer = self.renderer_mock
+        ui = self.ui_mock
+
+        storage.mock_add_spec(['get', 'step_next'], spec_set=True)
+        img_next = Mock(spec_set=[], name='img_next')
+        imgs = {
+            -3: None,
+            -2: Mock(spec_set=[], name='img_-2'),
+            -1: Mock(spec_set=[], name='img_-1'),
+            0: Mock(spec_set=[], name='img_0'),
+            1: img_next,
+            2: Mock(spec_set=[], name='img_2'),
+            3: Mock(spec_set=[], name='img_3'),
+            4: None,
+        }
+
+        def _get(offset):
+            return imgs[offset]
+
+        storage.get.side_effect = _get
+        expect_storage_get = [
+            call.get(0), call.get(-1), call.get(-2), call.get(-3),
+            call.get(1), call.get(2), call.get(3), call.get(4)
         ]
 
-        self.renderer_mock.mock_add_spec(['calc', 'render_to_left'], spec_set=True)
+        renderer.mock_add_spec(['calc', 'render_to_left'], spec_set=True)
         calc_result = [
             # left side
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
             {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 2, 'right_done': False},
             # right side
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
-            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False}
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 2, 'right_done': False}
         ]
-        self.renderer_mock.calc.side_effect = calc_result
-        render_result = list(itertools.repeat(object(), 101))
-        self.renderer_mock.render_to_left.side_effect = render_result
+        renderer.calc.side_effect = calc_result
         expect_renderer_calc = list(itertools.repeat(call.calc(ANY, ANY), len(calc_result)))
+
+        render_result = list(itertools.repeat(Mock(spec_set=[]), 101))
+        renderer.render_to_left.side_effect = render_result
+        args_render = [imgs[-2], imgs[-1], imgs[0], imgs[1], imgs[2], imgs[3]]
         expect_renderer_render = [
-            call.render_to_left(left_data[1::] + current_data + right_data[:-1:], pic_next, i) for i in range(101)
+            call.render_to_left(args_render, img_next, i) for i in range(101)
         ]
 
         expect_ui = [call.draw(pic) for pic in render_result]
 
         self.instance.to_left()
 
-        self.storage_mock.assert_has_calls(expect_storage)
-        self.assertEqual(self.renderer_mock.render_to_left.call_count, len(expect_renderer_render))
-        self.renderer_mock.assert_has_calls(expect_renderer_calc + expect_renderer_render)
-        self.ui_mock.assert_has_calls(expect_ui)
+        storage.assert_has_calls(expect_storage_get + [call.step_next()])
+        self.assertEqual(renderer.calc.call_count, len(expect_renderer_calc))
+        self.assertEqual(renderer.render_to_left.call_count, len(expect_renderer_render))
+        renderer.assert_has_calls(expect_renderer_calc + expect_renderer_render)
+        ui.assert_has_calls(expect_ui)
 
     def test_RendererLimit(self):
-        self.storage_mock.mock_add_spec(['get_previous', 'get_current', 'get_next', 'step_next'], spec_set=True)
-        left_data = [object(), object(), object()]
-        self.storage_mock.get_previous.side_effect = left_data[::-1]
-        pic_current, pic_next = object(), object()
-        current_data = [pic_current, pic_next]
-        self.storage_mock.get_current.side_effect = current_data
-        right_data = [object(), object(), object()]
-        self.storage_mock.get_next.side_effect = right_data
-        expect_storage = [
-            call.get_current(),
-            call.get_previous(0), call.get_previous(1), call.get_previous(2),
-            call.step_next(),
-            call.get_current(),
-            call.get_next(0), call.get_next(1), call.get_next(2)
+        storage = self.storage_mock
+        renderer = self.renderer_mock
+        ui = self.ui_mock
+
+        storage.mock_add_spec(['get', 'step_next'], spec_set=True)
+        img_current = Mock(spec_set=[], name='img_next')
+        img_next = Mock(spec_set=[], name='img_next')
+        imgs = {
+            -2: Mock(spec_set=[], name='img_-2'),
+            -1: Mock(spec_set=[], name='img_-1'),
+            0: img_current,
+            1: img_next,
+            2: Mock(spec_set=[], name='img_2'),
+            3: Mock(spec_set=[], name='img_3')
+        }
+
+        def _get(offset):
+            return imgs[offset]
+
+        storage.get.side_effect = _get
+        expect_storage_get = [
+            call.get(0), call.get(-1), call.get(-2),
+            call.get(1), call.get(2), call.get(3)
         ]
 
-        self.renderer_mock.mock_add_spec(['calc', 'render_to_left'], spec_set=True)
+        renderer.mock_add_spec(['calc', 'render_to_left'], spec_set=True)
         calc_result = [
             # left side
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
@@ -137,32 +174,34 @@ class ToLeft(unittest.TestCase):
             {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
             {'left': 0, 'left_done': False, 'right': 2, 'right_done': True}
         ]
-        self.renderer_mock.calc.side_effect = calc_result
-        self.renderer_mock.render_to_left.side_effect = list(itertools.repeat(object(), 101))
-        left_data_calc = left_data[::] + [pic_current]
-        right_data_calc = [pic_next] + right_data[::]
+        renderer.calc.side_effect = calc_result
+
         expect_renderer_calc = [
             #left side
-            call.calc(ANY, pic_current),
-            call.calc(ANY, pic_current),
-            call.calc(left_data_calc, pic_current),
+            call.calc(ANY, img_current),
+            call.calc(ANY, img_current),
+            call.calc([imgs[-2], imgs[-1], imgs[0]], img_current),
             #right side
-            call.calc(ANY, pic_next),
-            call.calc(ANY, pic_next),
-            call.calc(right_data_calc, pic_next)
+            call.calc(ANY, img_next),
+            call.calc(ANY, img_next),
+            call.calc([imgs[1], imgs[2], imgs[3]], img_next)
         ]
+
+        renderer.render_to_left.side_effect = list(itertools.repeat(Mock(spec_set=[]), 101))
+        args_render = [imgs[-2], imgs[-1], imgs[0], imgs[1], imgs[2], imgs[3]]
         expect_renderer_render = [
-            call.render_to_left(left_data + current_data + right_data, pic_next, i) for i in range(101)
+            call.render_to_left(args_render, img_next, i) for i in range(101)
         ]
 
         expect_ui = list(itertools.repeat(call.draw(ANY), 101))
 
         self.instance.to_left()
 
-        self.storage_mock.assert_has_calls(expect_storage)
-        self.renderer_mock.calc.assert_has_calls(expect_renderer_calc)
-        self.renderer_mock.assert_has_calls(expect_renderer_calc + expect_renderer_render)
-        self.ui_mock.assert_has_calls(expect_ui)
+        storage.assert_has_calls(expect_storage_get + [call.step_next()])
+        self.assertEqual(renderer.calc.call_count, len(expect_renderer_calc))
+        self.assertEqual(renderer.render_to_left.call_count, len(expect_renderer_render))
+        renderer.assert_has_calls(expect_renderer_calc + expect_renderer_render)
+        ui.assert_has_calls(expect_ui)
 
 
 class ToRight(unittest.TestCase):
@@ -179,113 +218,150 @@ class ToRight(unittest.TestCase):
         self.patcher.stop()
 
     def test_StorageNoData(self):
-        self.storage_mock.mock_add_spec(['get_current'], spec_set=True)
-        self.storage_mock.get_current.return_value = None
+        storage = self.storage_mock
+        renderer = self.renderer_mock
+        ui = self.ui_mock
 
-        self.renderer_mock.mock_add_spec(['render_default'], spec_set=True)
-        pic_mock = object()
-        self.renderer_mock.render_default.return_value = pic_mock
+        storage.mock_add_spec(['get'], spec_set=True)
+        storage.get.return_value = None
+        renderer.mock_add_spec(['render_default'], spec_set=True)
+        img_mock = Mock(spec_set=[])
+        renderer.render_default.return_value = img_mock
 
         self.instance.to_right()
 
-        self.storage_mock.get_current.assert_called_once_with()
-        self.renderer_mock.render_default.assert_called_once_with()
-        self.ui_mock.draw.assert_called_once_with(pic_mock)
+        storage.get.assert_called_once_with(0)
+        renderer.render_default.assert_called_once_with()
+        ui.draw.assert_called_once_with(img_mock)
 
     def test_StorageNoPrevious(self):
-        self.storage_mock.mock_add_spec(['get_current', 'get_next', 'step_previous'], spec_set=True)
-        pic_current = object()
-        self.storage_mock.get_current.side_effect = [pic_current, None]
-        pic_next_1, pic_next_2 = object(), object()
-        self.storage_mock.get_next.side_effect = [pic_next_1, pic_next_2, None]
-        expect_storage = [
-            call.get_current(),
-            call.get_next(0), call.get_next(1), call.get_next(2),
-            call.step_previous(),
-            call.get_current()
+        storage = self.storage_mock
+        renderer = self.renderer_mock
+        ui = self.ui_mock
+
+        storage.mock_add_spec(['get'], spec_set=True)
+        img_current = Mock(spec_set=[], name='img_current')
+        imgs = {
+            -1: None,
+            0: img_current,
+            1: Mock(spec_set=[], name='img_1'),
+            2: Mock(spec_set=[], name='img_2'),
+            3: None
+        }
+
+        def _get(offset):
+            return imgs[offset]
+
+        storage.get.side_effect = _get
+        expect_storage_get = [
+            call.get(0), call.get(1), call.get(2), call.get(3),
+            call.get(-1)
         ]
 
-        self.renderer_mock.mock_add_spec(['calc', 'render_to_right'], spec_set=True)
+        renderer.mock_add_spec(['calc', 'render_to_right'], spec_set=True)
         calc_result = [
-            # only left side
+            # only right side
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
-            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False}
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 2, 'right_done': False}
         ]
-        self.renderer_mock.calc.side_effect = calc_result
-        pic_ui = object()
-        self.renderer_mock.render_to_right.return_value = pic_ui
-        expect_renderer = [
-            call.calc(ANY, ANY), call.calc(ANY, ANY),
-            call.render_to_right([pic_current, pic_next_1, pic_next_2], pic_current, 100)
-        ]
+        renderer.calc.side_effect = calc_result
+        expect_renderer_calc = list(itertools.repeat(call.calc(ANY, ANY), len(calc_result)))
+        img_ui = Mock(spec_set=[])
+        renderer.render_to_right.return_value = img_ui
+        expect_renderer_render = [call.render_to_right([imgs[0], imgs[1], imgs[2]], img_current, 100)]
 
         self.instance.to_right()
 
-        self.storage_mock.assert_has_calls(expect_storage)
-        self.renderer_mock.assert_has_calls(expect_renderer)
-        self.ui_mock.draw.assert_called_once_with(pic_ui)
+        storage.assert_has_calls(expect_storage_get)
+        renderer.assert_has_calls(expect_renderer_calc + expect_renderer_render)
+        ui.draw.assert_called_once_with(img_ui)
 
     def test_StorageLimit(self):
-        self.storage_mock.mock_add_spec(['get_previous', 'get_current', 'get_next', 'step_previous'], spec_set=True)
-        left_data = [None, object(), object()]
-        self.storage_mock.get_previous.side_effect = left_data[::-1]
-        pic_previous = object()
-        current_data = [object(), pic_previous]
-        self.storage_mock.get_current.side_effect = current_data
-        right_data = [object(), object(), None]
-        self.storage_mock.get_next.side_effect = right_data
-        expect_storage = [
-            call.get_current(),
-            call.get_next(0), call.get_next(1), call.get_next(2),
-            call.step_previous(),
-            call.get_current(),
-            call.get_previous(0), call.get_previous(1), call.get_previous(2),
+        storage = self.storage_mock
+        renderer = self.renderer_mock
+        ui = self.ui_mock
+
+        storage.mock_add_spec(['get', 'step_previous'], spec_set=True)
+        img_previous = Mock(spec_set=[], name='img_previous')
+        imgs = {
+            -4: None,
+            -3: Mock(spec_set=[], name='img_-3'),
+            -2: Mock(spec_set=[], name='img_-2'),
+            -1: img_previous,
+            0: Mock(spec_set=[], name='img_0'),
+            1: Mock(spec_set=[], name='img_1'),
+            2: Mock(spec_set=[], name='img_2'),
+            3: None
+        }
+
+        def _get(offset):
+            return imgs[offset]
+
+        storage.get.side_effect = _get
+        expect_storage_get = [
+            call.get(0), call.get(1), call.get(2), call.get(3),
+            call.get(-1), call.get(-2), call.get(-3), call.get(-4)
         ]
 
-        self.renderer_mock.mock_add_spec(['calc', 'render_to_right'], spec_set=True)
+        renderer.mock_add_spec(['calc', 'render_to_right'], spec_set=True)
         calc_result = [
             # left side
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
             {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 2, 'right_done': False},
             # right side
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
-            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False}
+            {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
+            {'left': 0, 'left_done': False, 'right': 2, 'right_done': False}
         ]
-        self.renderer_mock.calc.side_effect = calc_result
-        render_result = list(itertools.repeat(object(), 101))
-        self.renderer_mock.render_to_right.side_effect = render_result
+        renderer.calc.side_effect = calc_result
         expect_renderer_calc = list(itertools.repeat(call.calc(ANY, ANY), len(calc_result)))
+
+        render_result = list(itertools.repeat(Mock(spec_set=[]), 101))
+        renderer.render_to_right.side_effect = render_result
+        args_render = [imgs[-3], imgs[-2], imgs[-1], imgs[0], imgs[1], imgs[2]]
         expect_renderer_render = [
-            call.render_to_right(left_data[1::] + current_data[::-1] + right_data[:-1:], pic_previous, i) for i in range(101)
+            call.render_to_right(args_render, img_previous, i) for i in range(101)
         ]
 
         expect_ui = [call.draw(pic) for pic in render_result]
 
         self.instance.to_right()
 
-        self.storage_mock.assert_has_calls(expect_storage)
-        self.assertEqual(self.renderer_mock.render_to_right.call_count, len(expect_renderer_render))
-        self.renderer_mock.assert_has_calls(expect_renderer_calc + expect_renderer_render)
-        self.ui_mock.assert_has_calls(expect_ui)
+        storage.assert_has_calls(expect_storage_get + [call.step_previous()])
+        self.assertEqual(renderer.calc.call_count, len(expect_renderer_calc))
+        self.assertEqual(renderer.render_to_right.call_count, len(expect_renderer_render))
+        renderer.assert_has_calls(expect_renderer_calc + expect_renderer_render)
+        ui.assert_has_calls(expect_ui)
 
     def test_RendererLimit(self):
-        self.storage_mock.mock_add_spec(['get_previous', 'get_current', 'get_next', 'step_previous'], spec_set=True)
-        left_data = [object(), object(), object()]
-        self.storage_mock.get_previous.side_effect = left_data[::-1]
-        pic_current, pic_previous = object(), object()
-        current_data = [pic_current, pic_previous]
-        self.storage_mock.get_current.side_effect = current_data
-        right_data = [object(), object(), object()]
-        self.storage_mock.get_next.side_effect = right_data
-        expect_storage = [
-            call.get_current(),
-            call.get_next(0), call.get_next(1), call.get_next(2),
-            call.step_previous(),
-            call.get_current(),
-            call.get_previous(0), call.get_previous(1), call.get_previous(2),
+        storage = self.storage_mock
+        renderer = self.renderer_mock
+        ui = self.ui_mock
+
+        storage.mock_add_spec(['get', 'step_previous'], spec_set=True)
+        img_current = Mock(spec_set=[], name='img_next')
+        img_previous = Mock(spec_set=[], name='img_next')
+        imgs = {
+            -3: Mock(spec_set=[], name='img_-3'),
+            -2: Mock(spec_set=[], name='img_-2'),
+            -1: img_previous,
+            0: img_current,
+            1: Mock(spec_set=[], name='img_1'),
+            2: Mock(spec_set=[], name='img_2')
+        }
+
+        def _get(offset):
+            return imgs[offset]
+
+        storage.get.side_effect = _get
+        expect_storage_get = [
+            call.get(0), call.get(1), call.get(2),
+            call.get(-1), call.get(-2), call.get(-3)
         ]
 
-        self.renderer_mock.mock_add_spec(['calc', 'render_to_right'], spec_set=True)
+        renderer.mock_add_spec(['calc', 'render_to_right'], spec_set=True)
         calc_result = [
             # right side
             {'left': 0, 'left_done': False, 'right': 0, 'right_done': False},
@@ -296,32 +372,34 @@ class ToRight(unittest.TestCase):
             {'left': 0, 'left_done': False, 'right': 1, 'right_done': False},
             {'left': 0, 'left_done': True, 'right': 2, 'right_done': False}
         ]
-        self.renderer_mock.calc.side_effect = calc_result
-        self.renderer_mock.render_to_right.side_effect = list(itertools.repeat(object(), 101))
-        left_data_calc = left_data[::] + [pic_previous]
-        right_data_calc = [pic_current] + right_data[::]
+        renderer.calc.side_effect = calc_result
+
         expect_renderer_calc = [
-            #right side
-            call.calc(ANY, pic_current),
-            call.calc(ANY, pic_current),
-            call.calc(right_data_calc, pic_current),
             #left side
-            call.calc(ANY, pic_previous),
-            call.calc(ANY, pic_previous),
-            call.calc(left_data_calc, pic_previous),
+            call.calc(ANY, img_current),
+            call.calc(ANY, img_current),
+            call.calc([imgs[0], imgs[1], imgs[2]], img_current),
+            #right side
+            call.calc(ANY, img_previous),
+            call.calc(ANY, img_previous),
+            call.calc([imgs[-3], imgs[-2], imgs[-1]], img_previous)
         ]
+
+        renderer.render_to_right.side_effect = list(itertools.repeat(Mock(spec_set=[]), 101))
+        args_render = [imgs[-3], imgs[-2], imgs[-1], imgs[0], imgs[1], imgs[2]]
         expect_renderer_render = [
-            call.render_to_right(left_data + current_data[::-1] + right_data, pic_previous, i) for i in range(101)
+            call.render_to_right(args_render, img_previous, i) for i in range(101)
         ]
 
         expect_ui = list(itertools.repeat(call.draw(ANY), 101))
 
         self.instance.to_right()
 
-        self.storage_mock.assert_has_calls(expect_storage)
-        self.renderer_mock.calc.assert_has_calls(expect_renderer_calc)
-        self.renderer_mock.assert_has_calls(expect_renderer_calc + expect_renderer_render)
-        self.ui_mock.assert_has_calls(expect_ui)
+        storage.assert_has_calls(expect_storage_get + [call.step_previous()])
+        self.assertEqual(renderer.calc.call_count, len(expect_renderer_calc))
+        self.assertEqual(renderer.render_to_right.call_count, len(expect_renderer_render))
+        renderer.assert_has_calls(expect_renderer_calc + expect_renderer_render)
+        ui.assert_has_calls(expect_ui)
 
 
 if __name__ == '__main__':
