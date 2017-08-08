@@ -14,6 +14,22 @@ class CreateTest(unittest.TestCase):
         del instance
 
 
+class TestSomeExtensions(unittest.TestCase):
+
+    @patch('libs.storage.Path', name='Path_mock', autospec=True, sec_set=True)
+    def test(self, Path_mock):
+        path_mock = Mock(name='path_mock', spec_set=Path)
+        Path_mock.return_value = path_mock
+
+        path_mock.glob.side_effect = [[], [], []]
+        expect_glob = [call.glob('*.jpg'), call.glob('*.png'), call.glob('*.bmp')]
+
+        instance = Storage('/home/user/pictures', ['*.jpg', '*.png', '*.bmp'])
+        instance.get(0)
+
+        path_mock.assert_has_calls(expect_glob)
+
+
 class TestFirstUse(unittest.TestCase):
 
     def setUp(self):
@@ -127,24 +143,6 @@ class TestFirstUse(unittest.TestCase):
 
         self.assertEqual(path.glob.call_count, 1)
         Image_mock.assert_has_calls(expect_open)
-
-
-class TestSomeExtensions(unittest.TestCase):
-
-    def setUp(self):
-        with patch('libs.storage.Path', name='Path_mock', autospec=True, spec_set=True) as Path_mock:
-            self.path_mock = Mock(name='path_mock', spec_set=Path)
-            Path_mock.return_value = self.path_mock
-            self.instance = Storage('/home/user/pictures', ['*.jpg', '*.png', '*.bmp'])
-
-    def test(self):
-        path = self.path_mock
-        path.glob.side_effect = [[], [], []]
-        expect_glob = [call.glob('*.jpg'), call.glob('*.png'), call.glob('*.bmp')]
-
-        self.instance.get(0)
-
-        path.assert_has_calls(expect_glob)
 
 
 if __name__ == '__main__':
