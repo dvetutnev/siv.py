@@ -22,37 +22,35 @@ class TestFirstUse(unittest.TestCase):
             Path_mock.return_value = self.path_mock
             self.instance = Storage('/home/user/pictures', ['*.jpg', '*.png'])
 
-    def tearDown(self):
-        self.path_mock.glob.assert_has_calls([call('*.jpg'), call('*.png')])
-
     def test_get_0_None(self):
-        glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [[], []]
+        path = self.path_mock
+        path.glob.side_effect = [[], []]
+        expect_glob = [call.glob('*.jpg'), call.glob('*.png')]
 
         result = self.instance.get(0)
 
         self.assertIsNone(result)
-        glob_mock.assert_has_calls([call('*.jpg'), call('*.png')])
+        path.assert_has_calls(expect_glob)
 
     @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
     def test_get_0_Normal(self, Image_mock):
-        glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
+        path = self.path_mock
+        path.glob.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
 
-        img_mock = Mock(name='img_mock', spec_set=Image.Image)
-        Image_mock.open.return_value = img_mock
+        img = Mock(name='0.jpg', spec_set=Image.Image)
+        Image_mock.open.return_value = img
         expect_open = [call.open('0.jpg')]
 
         result = self.instance.get(0)
 
         Image_mock.assert_has_calls(expect_open)
-        img_mock.load.assert_called_once_with()
-        self.assertEqual(result, img_mock)
+        img.load.assert_called_once_with()
+        self.assertEqual(result, img)
 
     @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
     def test_get_0_AllBadImage(self, Image_mock):
-        glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
+        path = self.path_mock
+        path.glob.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
 
         Image_mock.open.side_effect = FileNotFoundError('Mock: not found')
         expect_open = [call.open('0.jpg'), call.open('1.png'), call.open('2.jpg'), call.open('3.png')]
@@ -64,10 +62,10 @@ class TestFirstUse(unittest.TestCase):
 
     @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
     def test_get_0_SkipBadImage(self, Image_mock):
-        glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
+        path = self.path_mock
+        path.glob.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
 
-        img_bad = Mock(name='img_mock', spec_set=Image.Image)
+        img_bad = Mock(name='img_bad', spec_set=Image.Image)
         img_bad.load.side_effect = OSError('Mock: format invalid')
         img_normal = Mock(name='img_normal', spec_set=Image.Image)
 
@@ -92,8 +90,8 @@ class TestFirstUse(unittest.TestCase):
 
     @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
     def test_get_previous(self, Image_mock):
-        glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
+        path = self.path_mock
+        path.glob.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
 
         Image_mock.open.return_value = Mock(name='0.jpg', spec_set=Image.Image)
         expect_open = [call.open('0.jpg')]
@@ -105,13 +103,13 @@ class TestFirstUse(unittest.TestCase):
         self.assertIsNone(instance.get(-2))
         self.assertIsNone(instance.get(-3))
 
-        self.assertEqual(glob_mock.call_count, 2)
+        self.assertEqual(path.glob.call_count, 2)
         Image_mock.assert_has_calls(expect_open)
 
     @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
     def test_get_next(self, Image_mock):
-        glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
+        path = self.path_mock
+        path.glob.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
 
         img_0 = Mock(name='0.jpg', spec_set=Image.Image)
         img_1 = Mock(name='1.png', spec_set=Image.Image)
@@ -121,12 +119,13 @@ class TestFirstUse(unittest.TestCase):
         expect_open = [call.open('0.jpg'), call.open('1.png'), call.open('2.jpg'), call.open('3.png')]
 
         instance = self.instance
-        self.assertEqual(instance.get(0), img_0)
+        instance.get(0)
+
         self.assertEqual(instance.get(1), img_1)
         self.assertEqual(instance.get(2), img_2)
         self.assertEqual(instance.get(3), img_3)
 
-        self.assertEqual(glob_mock.call_count, 2)
+        self.assertEqual(path.glob.call_count, 2)
         Image_mock.assert_has_calls(expect_open)
 
 
