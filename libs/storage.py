@@ -23,7 +23,7 @@ class Storage(object):
                 img = Image.open(fname)
                 img.load()
                 return img
-            except Exception:
+            except OSError:
                 continue
 
         return None
