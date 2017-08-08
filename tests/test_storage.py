@@ -13,20 +13,6 @@ class CreateTest(unittest.TestCase):
         Path_mock.assert_called_once_with('/home/user/pictures')
         del instance
 
-    def test_for_return(self):
-        lst = [1, 2, 3, 4]
-        def tst(l):
-            count = 0
-            for i in l:
-                count += 1
-                try:
-                    if i != 3:
-                        raise Exception('except')
-                    return count
-                except:
-                    continue
-        print('test_for_return, count: ', tst(lst))
-
 
 class TestFirstUse(unittest.TestCase):
 
@@ -51,11 +37,11 @@ class TestFirstUse(unittest.TestCase):
     @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
     def test_get_0_Normal(self, Image_mock):
         glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [['3.jpg', '1.jpg'], ['2.png', '4.png']]
+        glob_mock.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
 
         img_mock = Mock(name='img_mock', spec_set=Image.Image)
         Image_mock.open.return_value = img_mock
-        expect_open = [call.open('1.jpg')]
+        expect_open = [call.open('0.jpg')]
 
         result = self.instance.get(0)
 
@@ -66,10 +52,10 @@ class TestFirstUse(unittest.TestCase):
     @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
     def test_get_0_AllBadImage(self, Image_mock):
         glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [['3.jpg', '1.jpg'], ['2.png', '4.png']]
+        glob_mock.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
 
         Image_mock.open.side_effect = FileNotFoundError('Mock: not found')
-        expect_open = [call.open('1.jpg'), call.open('2.png'), call.open('3.jpg'), call.open('4.png')]
+        expect_open = [call.open('0.jpg'), call.open('1.png'), call.open('2.jpg'), call.open('3.png')]
 
         result = self.instance.get(0)
 
@@ -79,7 +65,7 @@ class TestFirstUse(unittest.TestCase):
     @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
     def test_get_0_SkipBadImage(self, Image_mock):
         glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [['3.jpg', '1.jpg'], ['2.png', '4.png']]
+        glob_mock.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
 
         img_bad = Mock(name='img_mock', spec_set=Image.Image)
         img_bad.load.side_effect = OSError('Mock: format invalid')
@@ -95,7 +81,7 @@ class TestFirstUse(unittest.TestCase):
             if _open.count == 1:
                 return img_normal
         Image_mock.open.side_effect = _open
-        expect_open = [call.open('1.jpg'), call.open('2.png'), call.open('3.jpg')]
+        expect_open = [call.open('0.jpg'), call.open('1.png'), call.open('2.jpg')]
 
         result = self.instance.get(0)
 
@@ -107,10 +93,10 @@ class TestFirstUse(unittest.TestCase):
     @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
     def test_get_previous(self, Image_mock):
         glob_mock = self.path_mock.glob
-        glob_mock.side_effect = [['3.jpg', '1.jpg'], ['2.png', '4.png']]
+        glob_mock.side_effect = [['2.jpg', '0.jpg'], ['1.png', '3.png']]
 
-        Image_mock.open.return_value = Mock(name='1.jpg', spec_set=Image.Image)
-        expect_open = [call.open('1.jpg')]
+        Image_mock.open.return_value = Mock(name='0.jpg', spec_set=Image.Image)
+        expect_open = [call.open('0.jpg')]
 
         instance = self.instance
         instance.get(0)
