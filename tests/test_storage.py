@@ -116,8 +116,6 @@ class TestFirstUse(unittest.TestCase):
         instance.get(0)
 
         self.assertIsNone(instance.get(-1))
-        self.assertIsNone(instance.get(-2))
-        self.assertIsNone(instance.get(-3))
 
         self.assertEqual(path.glob.call_count, 1)
         Image_mock.assert_has_calls(expect_open)
@@ -140,9 +138,115 @@ class TestFirstUse(unittest.TestCase):
         self.assertEqual(instance.get(1), img_1)
         self.assertEqual(instance.get(2), img_2)
         self.assertEqual(instance.get(3), img_3)
+        self.assertIsNone(instance.get(4))
 
         self.assertEqual(path.glob.call_count, 1)
         Image_mock.assert_has_calls(expect_open)
+
+
+class TestNextUse(unittest.TestCase):
+
+    def setUp(self):
+        with patch('libs.storage.Path', name='Path_mock', autospec=True, spec_set=True) as Path_mock:
+            self.path_mock = Mock(name='path_mock', spec_set=Path)
+            Path_mock.return_value = self.path_mock
+            self.instance = Storage('/home/user/pictures', ['*.jpg'])
+
+        instance = self.instance
+        path = self.path_mock
+        path.glob.return_value = ['0.jpg', '1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg']
+        for _ in range(3):
+            instance.get(0)
+            instance.step_next()
+        path.glob.return_value = None
+        path.glob.side_effect = None
+        path.reset_mock()
+
+    @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
+    def test_get_0(self, Image_mock):
+        path = self.path_mock
+        path.glob.return_value = ['0.jpg', '1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg']
+
+        img = Mock(name='3.jpg', spec_set=Image.Image)
+        Image_mock.open.return_value = img
+
+        result = self.instance.get(0)
+
+        self.assertEqual(path.glob.call_count, 1)
+        Image_mock.assert_has_calls([call.open('3.jpg')])
+        self.assertEqual(result, img)
+
+    @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
+    def test_get_next(self, Image_mock):
+        path = self.path_mock
+        path.glob.return_value = ['0.jpg', '1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg']
+
+        img_0 = Mock(name='3.jpg', spec_set=Image.Image)
+        img_1 = Mock(name='4.jpg', spec_set=Image.Image)
+        img_2 = Mock(name='5.jpg', spec_set=Image.Image)
+        img_3 = Mock(name='6.jpg', spec_set=Image.Image)
+        Image_mock.open.side_effect = [img_0, img_1, img_2, img_3]
+        expect_open = [call.open('3.jpg'), call.open('4.jpg'), call.open('5.jpg'), call.open('6.jpg')]
+
+        instance = self.instance
+        instance.get(0)
+
+        self.assertEqual(instance.get(1), img_1)
+        self.assertEqual(instance.get(2), img_2)
+        self.assertEqual(instance.get(3), img_3)
+        self.assertIsNone(instance.get(4))
+
+        self.assertEqual(path.glob.call_count, 1)
+        Image_mock.assert_has_calls(expect_open)
+
+    @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
+    def test_get_previous(self, Image_mock):
+        path = self.path_mock
+        path.glob.return_value = ['0.jpg', '1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg']
+
+        img_0 = Mock(name='3.jpg', spec_set=Image.Image)
+        img_1 = Mock(name='2.jpg', spec_set=Image.Image)
+        img_2 = Mock(name='1.jpg', spec_set=Image.Image)
+        img_3 = Mock(name='0.jpg', spec_set=Image.Image)
+        Image_mock.open.side_effect = [img_0, img_1, img_2, img_3]
+        expect_open = [call.open('3.jpg'), call.open('2.jpg'), call.open('1.jpg'), call.open('0.jpg')]
+
+        instance = self.instance
+        instance.get(0)
+
+        self.assertEqual(instance.get(-1), img_1)
+        self.assertEqual(instance.get(-2), img_2)
+        self.assertEqual(instance.get(-3), img_3)
+        self.assertIsNone(instance.get(-4))
+
+        self.assertEqual(path.glob.call_count, 1)
+        Image_mock.assert_has_calls(expect_open)
+
+    @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
+    def test_step_next_limit(self, Image_mock):
+        path = self.path_mock
+        path.glob.return_value = ['0.jpg', '1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg']
+
+        img_0 = Mock(name='3.jpg', spec_set=Image.Image)
+        img_1 = Mock(name='4.jpg', spec_set=Image.Image)
+        img_2 = Mock(name='5.jpg', spec_set=Image.Image)
+        img_3 = Mock(name='6.jpg', spec_set=Image.Image)
+        Image_mock.open.side_effect = [img_0, img_1, img_2, img_3, img_3]
+        expect_open = [
+            call.open('3.jpg'), call.open('4.jpg'), call.open('5.jpg'), call.open('6.jpg'), call.open('6.jpg')
+        ]
+
+        instance = self.instance
+        for _ in range(3):
+            instance.get(0)
+            instance.step_next()
+        result_1 = instance.get(0)
+        instance.step_next()
+        result_2 = instance.get(0)
+
+        Image_mock.assert_has_calls(expect_open)
+        self.assertEqual(result_1, img_3)
+        self.assertEqual(result_2, img_3)
 
 
 if __name__ == '__main__':
