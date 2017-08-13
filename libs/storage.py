@@ -8,7 +8,7 @@ class Storage(object):
     def __init__(self, path, extensions):
         self._path = Path(path)
         self._extensions = extensions
-        self._idx_current = 0
+        self._fname_current = None
 
     def get(self, offset):
         if offset == 0:
@@ -16,11 +16,14 @@ class Storage(object):
             self._flist = sorted(g)
             if not self._flist:
                 return None
+            if self._fname_current is None:
+                self._fname_current = self._flist[0]
 
-        if self._idx_current + offset < 0:
+        idx_current = self._find_idx_current()
+        if idx_current + offset < 0:
             return None
 
-        flist = self._flist[self._idx_current + offset::]
+        flist = self._flist[idx_current + offset::]
         for fname in flist:
             try:
                 img = Image.open(fname)
@@ -32,5 +35,14 @@ class Storage(object):
         return None
 
     def step_next(self):
-        if len(self._flist) - 1 > self._idx_current:
-            self._idx_current += 1
+        idx = self._find_idx_current()
+        if len(self._flist) - 1 > idx:
+            self._fname_current = self._flist[idx + 1]
+
+    def _find_idx_current(self):
+        idx = len(self._flist) - 1
+        for fname in self._flist:
+            if fname >= self._fname_current:
+                idx = self._flist.index(fname)
+                break
+        return idx

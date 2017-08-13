@@ -248,6 +248,34 @@ class TestNextUse(unittest.TestCase):
         self.assertEqual(result_1, img_3)
         self.assertEqual(result_2, img_3)
 
+    @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
+    def test_unlink_current(self, Image_mock):
+        path = self.path_mock
+        path.glob.return_value = ['0.jpg', '1.jpg', '2.jpg', '4.jpg', '5.jpg', '6.jpg']
+
+        img = Mock(name='4.jpg', spec_set=Image.Image)
+        Image_mock.open.return_value = img
+
+        result = self.instance.get(0)
+
+        self.assertEqual(path.glob.call_count, 1)
+        Image_mock.assert_has_calls([call.open('4.jpg')])
+        self.assertEqual(result, img)
+
+    @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
+    def test_unlink_previous(self, Image_mock):
+        path = self.path_mock
+        path.glob.return_value = ['0.jpg', '1.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg']
+
+        img = Mock(name='3.jpg', spec_set=Image.Image)
+        Image_mock.open.return_value = img
+
+        result = self.instance.get(0)
+
+        self.assertEqual(path.glob.call_count, 1)
+        Image_mock.assert_has_calls([call.open('3.jpg')])
+        self.assertEqual(result, img)
+
 
 if __name__ == '__main__':
     unittest.main()
