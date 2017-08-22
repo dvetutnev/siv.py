@@ -276,6 +276,37 @@ class TestNextUse(unittest.TestCase):
         Image_mock.assert_has_calls([call.open('3.jpg')])
         self.assertEqual(result, img)
 
+    @patch('libs.storage.Image', name='Image_mock', autospec=True, spec_set=True)
+    def test_remove_bad_from_cache(self, Image_mock):
+        path = self.path_mock
+        path.glob.return_value = ['0.jpg', '1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg']
+
+        img_bad = Mock(name='img_bad', spec_set=Image.Image)
+        img_bad.load.side_effect = OSError('Mock: format invalid')
+        img_get_0 = Mock(name='img_normal', spec_set=Image.Image)
+        img_get_1 = Mock(name='img_normal', spec_set=Image.Image)
+
+        def _open(fname):
+            if not hasattr(_open, 'count'):
+                _open.count = 0
+                return img_bad
+            if _open.count == 0:
+                _open.count = 1
+                return img_get_0
+            if _open.count == 1:
+                _open.count = 2
+                return img_get_1
+        Image_mock.open.side_effect = _open
+        expect_open = [call.open('3.jpg'), call.open('4.jpg'), call.open('5.jpg')]
+
+        get_0 = self.instance.get(0)
+        get_1 = self.instance.get(1)
+
+        self.assertEqual(path.glob.call_count, 1)
+        Image_mock.assert_has_calls(expect_open)
+        self.assertEqual(get_0, img_get_0)
+        self.assertEqual(get_1, img_get_1)
+
 
 if __name__ == '__main__':
     unittest.main()

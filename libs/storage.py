@@ -24,12 +24,16 @@ class Storage(object):
             return None
 
         flist = self._flist[idx_current + offset::]
+        flist_bad = []
         for fname in flist:
             try:
                 img = Image.open(fname)
                 img.load()
+                for fname_bad in flist_bad:
+                    self._flist.remove(fname_bad)
                 return img
             except OSError:
+                flist_bad.append(fname)
                 continue
 
         return None
